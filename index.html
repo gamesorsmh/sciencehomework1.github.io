@@ -598,6 +598,24 @@ body {
     transition: all 0.2s;
   }
   .gm-close:hover { background: rgba(255,255,255,0.12); color: #fff; }
+  .gm-fullscreen {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 9px;
+    color: #888;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .gm-fullscreen:hover { background: rgba(255,255,255,0.12); color: #fff; }
+  .gm-fullscreen svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .gm-bar-right { display: flex; gap: 8px; align-items: center; }
   .gm-inner {
     width: 92vw;
     max-width: 1000px;
@@ -1096,9 +1114,21 @@ function closeGame() {
 document.addEventListener('DOMContentLoaded', function() {
   const modal = document.getElementById('gameModal');
   const closeBtn = document.getElementById('gmClose');
+  const fsBtn = document.getElementById('gmFullscreen');
   if (closeBtn) closeBtn.addEventListener('click', closeGame);
   if (modal) modal.addEventListener('click', function(e) {
     if (e.target === modal) closeGame();
+  });
+  if (fsBtn) fsBtn.addEventListener('click', function() {
+    const inner = document.querySelector('.gm-inner');
+    const frame = document.getElementById('gameFrame');
+    // Try iframe fullscreen first, fall back to container
+    const el = frame || inner;
+    if (!el) return;
+    if (el.requestFullscreen) el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    else if (el.mozRequestFullScreen) el.mozRequestFullScreen();
+    else if (el.msRequestFullscreen) el.msRequestFullscreen();
   });
 });
 
@@ -1117,7 +1147,13 @@ document.addEventListener('keydown', function(e) {
 <div id="gameModal">
   <div class="gm-bar">
     <div class="gm-title" id="gmTitle">Slope</div>
-    <button class="gm-close" id="gmClose">✕ Close</button>
+    <div class="gm-bar-right">
+      <button class="gm-fullscreen" id="gmFullscreen">
+        <svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+        Fullscreen
+      </button>
+      <button class="gm-close" id="gmClose">✕ Close</button>
+    </div>
   </div>
   <div class="gm-inner">
     <iframe id="gameFrame" src="" allowfullscreen
