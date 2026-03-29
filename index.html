@@ -370,9 +370,9 @@ body {
   align-items: flex-start;
   justify-content: flex-end;
   padding: 70px 22px 0;
-  visibility: hidden;
+  pointer-events: none;
 }
-#settingsOverlay.open { visibility: visible; }
+#settingsOverlay.open { pointer-events: all; }
 
 .s-backdrop {
   position: absolute;
@@ -384,6 +384,7 @@ body {
   cursor: pointer;
 }
 #settingsOverlay.open .s-backdrop { opacity: 1; }
+#settingsOverlay.closing .s-backdrop { opacity: 0; }
 
 .s-panel {
   position: relative;
@@ -396,12 +397,16 @@ body {
   box-shadow: 0 24px 60px rgba(0,0,0,0.9);
   transform: translateY(-14px) scale(0.96);
   opacity: 0;
-  transition: transform 0.3s cubic-bezier(0.34,1.4,0.64,1), opacity 0.22s;
+  transition: transform 0.35s cubic-bezier(0.34,1.4,0.64,1), opacity 0.28s;
   overflow: hidden;
 }
 #settingsOverlay.open .s-panel {
   transform: translateY(0) scale(1);
   opacity: 1;
+}
+#settingsOverlay.closing .s-panel {
+  transform: translateY(-10px) scale(0.95);
+  opacity: 0;
 }
 
 .s-head {
@@ -538,6 +543,92 @@ body {
   transition: background 0.2s, border-color 0.2s;
 }
 .test-btn:hover { background: rgba(233,69,96,0.16); border-color: rgba(233,69,96,0.4); }
+  .game-modal-close svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; }
+
+  .version-badge {
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #252525;
+    margin-top: 3px;
+  }
+
+  /* ── Game modal ── */
+  #gameModal {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: rgba(0,0,0,0.94);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    backdrop-filter: blur(6px);
+  }
+  #gameModal.open { opacity: 1; pointer-events: all; }
+  .gm-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 92vw;
+    max-width: 1000px;
+    padding: 10px 2px;
+  }
+  .gm-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    color: #fff;
+  }
+  .gm-close {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 9px;
+    color: #888;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .gm-close:hover { background: rgba(255,255,255,0.12); color: #fff; }
+  .gm-inner {
+    width: 92vw;
+    max-width: 1000px;
+    height: 72vh;
+    background: #000;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 40px 80px rgba(0,0,0,0.9);
+    transform: scale(0.94);
+    transition: transform 0.35s cubic-bezier(0.34,1.4,0.64,1);
+  }
+  #gameModal.open .gm-inner { transform: scale(1); }
+  .gm-inner iframe { width: 100%; height: 100%; border: none; display: block; }
+
+  /* active panel style */
+  .game-panel.active-game {
+    border-color: rgba(255,255,255,0.2) !important;
+    background: #181818 !important;
+    cursor: pointer;
+  }
+  .game-panel.active-game:hover { border-color: rgba(255,255,255,0.35) !important; }
+  .panel-play {
+    font-size: 0.67rem;
+    font-weight: 800;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .active-game:hover .panel-play { color: rgba(255,255,255,0.75); }
+
 </style>
 </head>
 <body>
@@ -584,7 +675,8 @@ body {
 <div id="dashboard">
   <!-- top nav -->
   <div class="dash-topbar">
-    <div class="dash-title">Choose a Game</div>
+    <div class="dash-title">LOCKED SITES</div>
+    <div class="version-badge">v1.0.0 &nbsp;·&nbsp; 29 Mar 2025</div>
     <button class="settings-trigger-btn" id="settingsBtn">
       <svg viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="3"/>
@@ -606,10 +698,15 @@ body {
 
     <!-- game grid -->
     <div class="games-grid" id="gamesGrid">
-      <div class="game-panel" data-name="game 1">
-        <div class="panel-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
-        <div class="panel-label">Game 1</div>
-        <div class="panel-coming">Coming soon</div>
+      <div class="game-panel active-game" data-name="slope" onclick="openGame('slope')">
+        <div class="panel-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3.5"/>
+            <path d="M3 19 L9 11 L15 15 L21 5"/>
+          </svg>
+        </div>
+        <div class="panel-label" style="color:rgba(255,255,255,0.7)">Slope</div>
+        <div class="panel-play">▶ Play Now</div>
       </div>
       <div class="game-panel" data-name="game 2">
         <div class="panel-icon"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
@@ -881,8 +978,16 @@ const keybindBadge    = document.getElementById('keybindBadge');
 const testHideBtn     = document.getElementById('testHideBtn');
 const destTiles       = document.querySelectorAll('.dest-tile');
 
-function openSettings()  { settingsOverlay.classList.add('open'); }
-function closeSettings() { settingsOverlay.classList.remove('open'); }
+function openSettings() {
+  settingsOverlay.classList.remove('closing');
+  settingsOverlay.classList.add('open');
+}
+function closeSettings() {
+  settingsOverlay.classList.add('closing');
+  setTimeout(() => {
+    settingsOverlay.classList.remove('open', 'closing');
+  }, 300);
+}
 
 settingsBtn.addEventListener('click', openSettings);
 sCloseBtn.addEventListener('click', closeSettings);
@@ -952,6 +1057,74 @@ document.addEventListener('keydown', e => {
     doHide();
   }
 });
+
+// ── Game modal ──────────────────────────────────────────────────────
+const GAMES = {
+  slope: {
+    title: 'Slope',
+    html: `<html><head><meta charset="utf-8"><style>*{margin:0;padding:0;}html,body,iframe{width:100%;height:100%;border:none;overflow:hidden;display:block;background:#000;}</style></head><body><iframe src="https://azgames.io/game/xlope/" width="100%" height="100%" frameborder="0" scrolling="no" allowfullscreen sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-pointer-lock allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"></iframe></body></html>`
+  }
+};
+
+function openGame(key) {
+  const game = GAMES[key];
+  if (!game) return;
+  const modal = document.getElementById('gameModal');
+  const frame = document.getElementById('gameFrame');
+  const title = document.getElementById('gmTitle');
+  if (!modal || !frame || !title) return;
+  title.textContent = game.title;
+  // Create a blob URL from the HTML so the iframe loads our wrapper page
+  const blob = new Blob([game.html], { type: 'text/html' });
+  frame.src = URL.createObjectURL(blob);
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeGame() {
+  const modal = document.getElementById('gameModal');
+  const frame = document.getElementById('gameFrame');
+  if (!modal || !frame) return;
+  modal.classList.remove('open');
+  document.body.style.overflow = '';
+  setTimeout(() => {
+    if (frame.src.startsWith('blob:')) URL.revokeObjectURL(frame.src);
+    frame.src = '';
+  }, 300);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const modal = document.getElementById('gameModal');
+  const closeBtn = document.getElementById('gmClose');
+  if (closeBtn) closeBtn.addEventListener('click', closeGame);
+  if (modal) modal.addEventListener('click', function(e) {
+    if (e.target === modal) closeGame();
+  });
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('gameModal');
+    if (modal && modal.classList.contains('open')) closeGame();
+  }
+});
+
 </script>
+
+
+
+<!-- GAME MODAL -->
+<div id="gameModal">
+  <div class="gm-bar">
+    <div class="gm-title" id="gmTitle">Slope</div>
+    <button class="gm-close" id="gmClose">✕ Close</button>
+  </div>
+  <div class="gm-inner">
+    <iframe id="gameFrame" src="" allowfullscreen
+      sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-pointer-lock allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation">
+    </iframe>
+  </div>
+</div>
+
 </body>
 </html>
